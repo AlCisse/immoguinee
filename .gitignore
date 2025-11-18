@@ -1,0 +1,179 @@
+# ===============================================
+# GITIGNORE - Plateforme Immobilière Guinée
+# ===============================================
+
+# ===============================================
+# ENVIRONNEMENT
+# ===============================================
+.env
+.env.local
+.env.*.local
+.env.backup
+
+# ===============================================
+# DOCKER
+# ===============================================
+docker/mysql/data/
+docker/postgres/data/
+
+# ===============================================
+# LARAVEL / PHP
+# ===============================================
+/backend/vendor/
+/backend/node_modules/
+/backend/public/hot
+/backend/public/storage
+/backend/storage/*.key
+/backend/storage/logs/*
+!/backend/storage/logs/.gitkeep
+/backend/storage/framework/cache/*
+!/backend/storage/framework/cache/.gitkeep
+/backend/storage/framework/sessions/*
+!/backend/storage/framework/sessions/.gitkeep
+/backend/storage/framework/views/*
+!/backend/storage/framework/views/.gitkeep
+/backend/bootstrap/cache/*
+!/backend/bootstrap/cache/.gitkeep
+
+# Laravel IDE Helper
+/backend/_ide_helper.php
+/backend/_ide_helper_models.php
+/backend/.phpstorm.meta.php
+
+# ===============================================
+# REACT / FRONTEND
+# ===============================================
+/frontend/node_modules/
+/frontend/build/
+/frontend/dist/
+/frontend/.pnp
+/frontend/.pnp.js
+/frontend/coverage/
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
+
+# Logs frontend
+/frontend/npm-debug.log*
+/frontend/yarn-debug.log*
+/frontend/yarn-error.log*
+
+# ===============================================
+# REACT NATIVE / MOBILE
+# ===============================================
+/mobile/node_modules/
+/mobile/.expo/
+/mobile/.expo-shared/
+/mobile/dist/
+/mobile/npm-debug.*
+/mobile/*.jks
+/mobile/*.p8
+/mobile/*.p12
+/mobile/*.key
+/mobile/*.mobileprovision
+/mobile/*.orig.*
+/mobile/web-build/
+
+# ===============================================
+# N8N
+# ===============================================
+/n8n/data/
+
+# ===============================================
+# VOLUMES & DATA
+# ===============================================
+/volumes/
+/data/
+/backups/
+*.sql
+*.sql.gz
+
+# ===============================================
+# SYSTÈME
+# ===============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ===============================================
+# IDE
+# ===============================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+.phpintel/
+
+# ===============================================
+# LOGS
+# ===============================================
+*.log
+logs/
+*.log.*
+
+# ===============================================
+# CACHE
+# ===============================================
+.cache/
+*.cache
+
+# ===============================================
+# TEMP
+# ===============================================
+tmp/
+temp/
+*.tmp
+*.temp
+
+# ===============================================
+# SECRETS & KEYS
+# ===============================================
+*.pem
+*.key
+*.cert
+*.crt
+secrets.json
+credentials.json
+
+# ===============================================
+# TESTING
+# ===============================================
+/backend/tests/_output/
+/backend/tests/_support/_generated
+.phpunit.result.cache
+phpunit.xml
+
+# ===============================================
+# BUILD
+# ===============================================
+/build/
+/dist/
+
+# ===============================================
+# COMPOSER
+# ===============================================
+composer.phar
+composer.lock
+
+# ===============================================
+# NPM
+# ===============================================
+package-lock.json
+yarn.lock
+
+# ===============================================
+# DOCUMENTATION
+# ===============================================
+/docs/.vuepress/dist/

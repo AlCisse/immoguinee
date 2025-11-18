@@ -1,0 +1,267 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # SERVICE NGINX + PHP (Laravel)
+  # ==========================================
+  app:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: immo_guinee_app
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - immo_network
+    depends_on:
+      - postgres
+      - redis
+
+  # ==========================================
+  # SERVICE NGINX
+  # ==========================================
+  nginx:
+    image: nginx:alpine
+    container_name: immo_guinee_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./backend:/var/www
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - immo_network
+    depends_on:
+      - app
+
+  # ==========================================
+  # SERVICE POSTGRESQL (Base de données)
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: immo_guinee_postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: immo_guinee_db
+      POSTGRES_USER: immo_user
+      POSTGRES_PASSWORD: immo_pass_secure_123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - immo_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U immo_user -d immo_guinee_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # SERVICE PGADMIN (Gestion BDD PostgreSQL)
+  # ==========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: immo_guinee_pgadmin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@immguinee.local
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - immo_network
+    depends_on:
+      - postgres
+
+  # ==========================================
+  # SERVICE REDIS (Cache et Queues)
+  # ==========================================
+  redis:
+    image: redis:alpine
+    container_name: immo_guinee_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - immo_network
+    command: redis-server --appendonly yes
+
+  # ==========================================
+  # SERVICE ELASTICSEARCH (Recherche)
+  # ==========================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: immo_guinee_elasticsearch
+    restart: unless-stopped
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - immo_network
+
+  # ==========================================
+  # SERVICE MAILHOG (Test emails local)
+  # ==========================================
+  mailhog:
+    image: mailhog/mailhog
+    container_name: immo_guinee_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Interface Web
+    networks:
+      - immo_network
+
+  # ==========================================
+  # SERVICE N8N (Automatisation & Agents IA)
+  # ==========================================
+  n8n:
+    image: n8nio/n8n
+    container_name: immo_guinee_n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin123
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Africa/Conakry
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n_db
+      - DB_POSTGRESDB_USER=immo_user
+      - DB_POSTGRESDB_PASSWORD=immo_pass_secure_123
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/workflows:/home/node/.n8n/workflows
+    networks:
+      - immo_network
+    depends_on:
+      - postgres
+      - redis
+
+  # ==========================================
+  # SERVICE NODE.JS (React & React Native)
+  # ==========================================
+  node:
+    image: node:20-alpine
+    container_name: immo_guinee_node
+    restart: unless-stopped
+    working_dir: /app
+    ports:
+      - "3000:3000"  # React Web
+      - "19000:19000"  # React Native Expo
+      - "19001:19001"  # React Native Expo
+      - "19002:19002"  # React Native Expo
+    volumes:
+      - ./frontend:/app
+    networks:
+      - immo_network
+    command: sh -c "npm install && npm start"
+    stdin_open: true
+    tty: true
+
+  # ==========================================
+  # SERVICE MINIO (Stockage S3-compatible)
+  # Alternative locale à AWS S3 pour images
+  # ==========================================
+  minio:
+    image: minio/minio
+    container_name: immo_guinee_minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minio_admin
+      MINIO_ROOT_PASSWORD: minio_password_123
+    volumes:
+      - minio_data:/data
+    networks:
+      - immo_network
+    command: server /data --console-address ":9001"
+
+  # ==========================================
+  # SERVICE QUEUE WORKER (Laravel Jobs)
+  # ==========================================
+  queue:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: immo_guinee_queue
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+    networks:
+      - immo_network
+    depends_on:
+      - postgres
+      - redis
+    command: php artisan queue:work --sleep=3 --tries=3
+
+  # ==========================================
+  # SERVICE SCHEDULER (Laravel Cron)
+  # ==========================================
+  scheduler:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: immo_guinee_scheduler
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+    networks:
+      - immo_network
+    depends_on:
+      - postgres
+      - redis
+    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction & sleep 60; done"
+
+# ==========================================
+# RÉSEAUX
+# ==========================================
+networks:
+  immo_network:
+    driver: bridge
+
+# ==========================================
+# VOLUMES PERSISTANTS
+# ==========================================
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  redis_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
+  n8n_data:
+    driver: local
+  minio_data:
+    driver: local
