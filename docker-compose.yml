@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ==========================================
   # SERVICE NGINX + PHP (Laravel)
