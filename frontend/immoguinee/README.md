@@ -78,13 +78,28 @@ L'authentification utilise :
 
 ## Fonctionnalités principales
 
-- Recherche et filtrage de propriétés
-- Authentification (login/register/logout)
-- Tableau de bord utilisateur
-- Gestion des propriétés (CRUD)
-- Upload d'images
-- Système de favoris
-- Création de contrats
+- **Authentification complète**
+  - Inscription avec sélection du rôle (Client, Propriétaire, Agent)
+  - Connexion avec gestion de session
+  - Protection des routes via middleware
+
+- **Recherche et gestion des propriétés**
+  - Liste des propriétés avec filtres avancés
+  - Pagination des résultats
+  - Détail d'une propriété avec galerie d'images
+  - Gestion CRUD des propriétés
+
+- **Tableau de bord utilisateur**
+  - Vue d'ensemble des statistiques
+  - Profil utilisateur éditable
+  - Actions rapides selon le rôle
+
+- **Interface utilisateur**
+  - Design responsive (mobile, tablette, desktop)
+  - Composants UI réutilisables (Button, Input, Card, etc.)
+  - Page 404 personnalisée
+  - Loading states
+  - Thème personnalisé avec Tailwind CSS
 
 ## Scripts disponibles
 
