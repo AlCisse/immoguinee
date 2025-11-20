@@ -35,4 +35,32 @@ return [
         ],
     ],
 
+    'orange_money' => [
+        'api_key' => env('ORANGE_MONEY_API_KEY'),
+        'merchant_key' => env('ORANGE_MONEY_MERCHANT_KEY'),
+        'merchant_id' => env('ORANGE_MONEY_MERCHANT_ID'),
+        'api_url' => env('ORANGE_MONEY_API_URL', 'https://api.orange.com/orange-money-webpay/gu/v1'),
+    ],
+
+    'mtn_money' => [
+        'api_key' => env('MTN_MONEY_API_KEY'),
+        'subscription_key' => env('MTN_MONEY_SUBSCRIPTION_KEY'),
+        'api_url' => env('MTN_MONEY_API_URL', 'https://sandbox.momodeveloper.mtn.com'),
+        'environment' => env('MTN_MONEY_ENVIRONMENT', 'sandbox'), // sandbox ou production
+    ],
+
+    'sms' => [
+        'provider' => env('SMS_PROVIDER', 'orange'), // orange, mtn, twilio
+        'orange_api_key' => env('ORANGE_SMS_API_KEY'),
+        'mtn_api_key' => env('MTN_SMS_API_KEY'),
+        'twilio_sid' => env('TWILIO_SID'),
+        'twilio_token' => env('TWILIO_AUTH_TOKEN'),
+        'twilio_from' => env('TWILIO_FROM'),
+    ],
+
+    'n8n' => [
+        'secret' => env('N8N_WEBHOOK_SECRET'),
+        'url' => env('N8N_URL', 'http://localhost:5678'),
+    ],
+
 ];

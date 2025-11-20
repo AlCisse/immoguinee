@@ -1,59 +1,280 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🏠 Plateforme Immobilière Guinée
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> Une plateforme immobilière complète et moderne pour le marché guinéen, avec agents IA intégrés
 
-## About Laravel
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](docker-compose.yml)
+[![Laravel](https://img.shields.io/badge/laravel-10-red.svg)](https://laravel.com)
+[![React](https://img.shields.io/badge/react-18-blue.svg)](https://react.dev)
+[![PostgreSQL](https://img.shields.io/badge/postgresql-16-blue.svg)](https://postgresql.org)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Aperçu
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Plateforme complète de gestion immobilière inspirée d'Immowelt.de, adaptée au marché guinéen avec :
+- ✅ Backend API Laravel + PostgreSQL
+- ✅ Frontend React.js responsive
+- ✅ Application mobile React Native
+- ✅ 7 Agents IA avec n8n
+- ✅ Recherche avancée Elasticsearch
+- ✅ Stockage MinIO S3-compatible
+- ✅ Cache Redis multi-niveaux
+- ✅ Infrastructure Docker complète
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🚀 Démarrage Rapide
 
-## Learning Laravel
+### Prérequis
+- Docker Desktop (≥ 20.10)
+- 8GB RAM minimum
+- 20GB espace disque
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Installation en 3 minutes
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+# 1. Cloner le projet
+git clone https://github.com/votre-repo/immo-guinee.git
+cd immo-guinee
 
-## Laravel Sponsors
+# 2. Lancer l'installation automatique
+chmod +x init.sh && ./init.sh
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# 3. Vérifier
+make status
+```
 
-### Premium Partners
+### Accès aux services
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+| Service | URL | Identifiants |
+|---------|-----|--------------|
+| **Laravel API** | http://localhost:8080 | - |
+| **React Web** | http://localhost:3000 | - |
+| **pgAdmin** | http://localhost:8081 | admin@immguinee.local / admin123 |
+| **n8n (IA)** | http://localhost:5678 | admin / admin123 |
+| **MailHog** | http://localhost:8025 | - |
+| **MinIO** | http://localhost:9001 | minio_admin / minio_password_123 |
 
-## Contributing
+## 📚 Documentation
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- 📖 [**Guide Complet**](README.md) - Documentation détaillée
+- ⚡ [**Quick Start**](QUICKSTART.md) - Installation rapide
+- 🤖 [**Agents IA**](GUIDE_AGENTS_IA.md) - Configuration n8n
+- 🏗️ [**Architecture**](ARCHITECTURE.md) - Schémas techniques
+- ✅ [**Checklist**](CHECKLIST.md) - Plan de développement
+- 💻 [**VS Code Setup**](VSCODE_SETUP.md) - Configuration IDE
 
-## Code of Conduct
+## 🛠️ Stack Technique
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Backend
+- **Framework**: Laravel 10
+- **Language**: PHP 8.2
+- **Database**: PostgreSQL 16
+- **Cache**: Redis 7
+- **Search**: Elasticsearch 8
+- **Storage**: MinIO (S3-compatible)
 
-## Security Vulnerabilities
+### Frontend
+- **Web**: React 18 + TailwindCSS
+- **Mobile**: React Native + Expo
+- **State**: React Query + Context API
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### DevOps & IA
+- **Container**: Docker + Docker Compose
+- **Automation**: n8n
+- **AI**: Claude AI integration
+- **Email**: MailHog (dev) / SMTP (prod)
 
-## License
+## 🎯 Fonctionnalités
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Pour les Utilisateurs
+- 🔍 Recherche avancée avec filtres intelligents
+- 📱 Application mobile native iOS/Android
+- 💬 Messagerie interne temps réel
+- ⭐ Favoris et alertes personnalisées
+- 📊 Tableau de bord complet
+
+### Pour les Agents/Agences
+- 📈 Analytics et statistiques détaillées
+- 🎨 Publication d'annonces simplifiée
+- 📸 Upload multiple d'images optimisé
+- 🤝 Gestion des rendez-vous
+- ⚡ Mise en avant des annonces
+
+### Agents IA (n8n)
+1. 🛡️ **Modération automatique** - Vérification des annonces
+2. 🔍 **Recherche intelligente** - Compréhension des requêtes
+3. 📱 **Notifications** - Alertes personnalisées
+4. 💰 **Estimation prix** - IA de valorisation
+5. 💬 **Chatbot support** - Assistance 24/7
+6. 📊 **Analytics** - Insights automatiques
+7. 📸 **Qualité photos** - Vérification automatique
+
+## 🗄️ Structure du Projet
+
+```
+immo-guinee/
+├── backend/              # Laravel API
+│   ├── app/
+│   ├── database/
+│   ├── routes/
+│   └── ...
+├── frontend/             # React Web App
+│   ├── src/
+│   ├── public/
+│   └── ...
+├── mobile/               # React Native App
+│   ├── src/
+│   ├── assets/
+│   └── ...
+├── docker/               # Docker configurations
+│   ├── php/
+│   ├── nginx/
+│   └── postgres/
+├── n8n/                  # n8n workflows
+│   └── workflows/
+├── docker-compose.yml    # Services configuration
+├── Makefile              # Commands shortcuts
+└── README.md             # This file
+```
+
+## 📦 Services Docker
+
+Le projet inclut 12 services Docker :
+- **app** - Laravel PHP-FPM
+- **nginx** - Serveur web
+- **postgres** - Base de données PostgreSQL
+- **pgadmin** - Interface graphique BDD
+- **redis** - Cache et queues
+- **elasticsearch** - Moteur de recherche
+- **mailhog** - Test emails
+- **n8n** - Automatisation & IA
+- **node** - React/React Native
+- **minio** - Stockage fichiers
+- **queue** - Worker Laravel
+- **scheduler** - Cron Laravel
+
+## 🔧 Commandes Utiles
+
+```bash
+# Gestion des services
+make up              # Démarrer tous les services
+make down            # Arrêter tous les services
+make restart         # Redémarrer
+make logs            # Voir les logs
+make status          # État des services
+
+# Laravel
+make shell           # Entrer dans le conteneur
+make db-migrate      # Lancer les migrations
+make db-fresh        # Reset BDD + seed
+make cache-clear     # Vider les caches
+make tinker          # Console interactive
+
+# Maintenance
+make backup-db       # Sauvegarder PostgreSQL
+make clean           # Nettoyer (⚠️ supprime data)
+make help            # Toutes les commandes
+```
+
+## 🔐 Sécurité
+
+- ✅ Authentification JWT pour l'API
+- ✅ CSRF Protection
+- ✅ XSS Prevention
+- ✅ SQL Injection protection (Eloquent ORM)
+- ✅ Rate limiting
+- ✅ Input validation & sanitization
+- ✅ HTTPS ready
+- ✅ Logs d'audit
+
+## 🚀 Déploiement
+
+### Développement
+```bash
+make install
+make up
+```
+
+### Production
+Voir le guide de déploiement complet dans [README.md](README.md)
+
+### Mobile
+```bash
+# Android
+cd mobile && eas build --platform android
+
+# iOS
+cd mobile && eas build --platform ios
+```
+
+## 📊 Performance
+
+Objectifs de performance :
+- ⚡ API Response: < 200ms
+- ⚡ Page Load: < 2s
+- ⚡ Search Results: < 500ms
+- ⚡ Cache Hit Rate: > 80%
+
+## 🌍 Spécificités Guinée
+
+- 🇬🇳 Localisation complète en français
+- 💵 Support Franc Guinéen (GNF)
+- 📱 Intégration Orange Money / MTN Money
+- 📞 Préfixe téléphonique +224
+- 🗺️ Villes et quartiers guinéens
+- 🕐 Timezone: Africa/Conakry
+
+## 🤝 Contribution
+
+Les contributions sont les bienvenues ! Voir [CONTRIBUTING.md](CONTRIBUTING.md)
+
+1. Fork le projet
+2. Créer une branche (`git checkout -b feature/AmazingFeature`)
+3. Commit (`git commit -m 'Add some AmazingFeature'`)
+4. Push (`git push origin feature/AmazingFeature`)
+5. Ouvrir une Pull Request
+
+## 📝 License
+
+Ce projet est sous licence MIT. Voir [LICENSE](LICENSE) pour plus de détails.
+
+## 👥 Auteurs
+
+- **Votre Nom** - *Initial work* - [YourGithub](https://github.com/yourusername)
+
+Voir aussi la liste des [contributeurs](https://github.com/yourusername/immo-guinee/contributors).
+
+## 🙏 Remerciements
+
+- Laravel Framework
+- React Community
+- n8n Team
+- Anthropic (Claude AI)
+- Communauté open source
+
+## 📞 Support
+
+- 📧 Email: support@immguinee.gn
+- 🌐 Site: https://immguinee.gn
+- 💬 Discord: [Rejoindre](https://discord.gg/your-invite)
+
+## 🗺️ Roadmap
+
+- [x] Infrastructure Docker complète
+- [x] API Laravel de base
+- [x] Agents IA n8n
+- [ ] Frontend React (en cours)
+- [ ] App mobile React Native (en cours)
+- [ ] Intégration Mobile Money
+- [ ] Tests automatisés
+- [ ] CI/CD Pipeline
+- [ ] Déploiement production
+- [ ] Version 1.0 🎉
+
+## ⭐ Star History
+
+Si ce projet vous aide, n'hésitez pas à lui donner une ⭐ !
+
+[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/immo-guinee&type=Date)](https://star-history.com/#yourusername/immo-guinee&Date)
+
+---
+
+**Fait avec ❤️ en Guinée 🇬🇳**

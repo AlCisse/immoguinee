@@ -133,7 +133,9 @@ services:
   # SERVICE N8N (Automatisation & Agents IA)
   # ==========================================
   n8n:
-    image: n8nio/n8n
+    build: 
+      context: .
+      dockerfile: Dockerfile  # Placez le Dockerfile ci-dessus ici
     container_name: immo_guinee_n8n
     restart: unless-stopped
     ports:
@@ -157,11 +159,14 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
       - ./n8n/workflows:/home/node/.n8n/workflows
+      - ./:/workspace:cached  
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - immo_network
     depends_on:
       - postgres
       - redis
+    user: root  # Solution alternative si le Dockerfile ne fonctionne pas
 
   # ==========================================
   # SERVICE NODE.JS (React & React Native)
