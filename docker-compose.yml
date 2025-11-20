@@ -72,7 +72,7 @@ services:
     ports:
       - "8081:80"
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@immguinee.local
+      PGADMIN_DEFAULT_EMAIL: admin@immoguinee.com
       PGADMIN_DEFAULT_PASSWORD: admin123
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
@@ -169,7 +169,7 @@ services:
     user: root  # Solution alternative si le Dockerfile ne fonctionne pas
 
   # ==========================================
-  # SERVICE NODE.JS (React & React Native)
+  # SERVICE NODE.JS (Next.js Frontend)
   # ==========================================
   node:
     image: node:20-alpine
@@ -177,15 +177,12 @@ services:
     restart: unless-stopped
     working_dir: /app
     ports:
-      - "3000:3000"  # React Web
-      - "19000:19000"  # React Native Expo
-      - "19001:19001"  # React Native Expo
-      - "19002:19002"  # React Native Expo
+      - "3000:3000"  # Next.js
     volumes:
-      - ./frontend:/app
+      - ./frontend/immoguinee:/app
     networks:
       - immo_network
-    command: sh -c "npm install && npm start"
+    command: sh -c "npm install && npm run dev"
     stdin_open: true
     tty: true
 
