@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import { getErrorMessage } from '@/utils/errors'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -25,7 +26,8 @@ export default function LoginPage() {
       await login(email, password)
       router.push('/dashboard')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Une erreur est survenue lors de la connexion')
+      // Affiche le message d'erreur exact de l'API
+      setError(getErrorMessage(err, 'Une erreur est survenue lors de la connexion'))
     } finally {
       setIsLoading(false)
     }
@@ -49,8 +51,11 @@ export default function LoginPage() {
         <Card>
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                {error}
+              <div className="bg-secondary-50 border border-secondary-200 text-secondary-700 px-4 py-3 rounded-lg flex items-start gap-2 animate-slide-down">
+                <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <span>{error}</span>
               </div>
             )}
 
