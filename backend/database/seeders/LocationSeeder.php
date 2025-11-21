@@ -14,14 +14,14 @@ class LocationSeeder extends Seeder
     {
         // Villes principales de Guinée
         $cities = [
-            ['name' => 'Conakry', 'type' => 'city', 'latitude' => 9.6412, 'longitude' => -13.5784],
-            ['name' => 'Kankan', 'type' => 'city', 'latitude' => 10.3844, 'longitude' => -9.3056],
-            ['name' => 'Kindia', 'type' => 'city', 'latitude' => 10.0569, 'longitude' => -12.8658],
-            ['name' => 'Nzérékoré', 'type' => 'city', 'latitude' => 7.7472, 'longitude' => -8.8178],
-            ['name' => 'Labé', 'type' => 'city', 'latitude' => 11.3167, 'longitude' => -12.2833],
-            ['name' => 'Mamou', 'type' => 'city', 'latitude' => 10.3833, 'longitude' => -12.0833],
-            ['name' => 'Boké', 'type' => 'city', 'latitude' => 10.9333, 'longitude' => -14.3000],
-            ['name' => 'Siguiri', 'type' => 'city', 'latitude' => 11.4167, 'longitude' => -9.1667],
+            ['name' => 'Conakry',  'slug' => "city-district1", 'type' => 'city', 'latitude' => 9.6412, 'longitude' => -13.5784],
+            ['name' => 'Kankan', 'slug' => "city-district2", 'type' => 'city', 'latitude' => 10.3844, 'longitude' => -9.3056],
+            ['name' => 'Kindia', 'slug' => "city-district3", 'type' => 'city', 'latitude' => 10.0569, 'longitude' => -12.8658],
+            ['name' => 'Nzérékoré', 'slug' => "city-district4", 'type' => 'city', 'latitude' => 7.7472, 'longitude' => -8.8178],
+            ['name' => 'Labé', 'slug' => "city-district5", 'type' => 'city', 'latitude' => 11.3167, 'longitude' => -12.2833],
+            ['name' => 'Mamou', 'slug' => "city-district6", 'type' => 'city', 'latitude' => 10.3833, 'longitude' => -12.0833],
+            ['name' => 'Boké', 'slug' => "city-district7", 'type' => 'city', 'latitude' => 10.9333, 'longitude' => -14.3000],
+            ['name' => 'Siguiri', 'slug' => "city-district8", 'type' => 'city', 'latitude' => 11.4167, 'longitude' => -9.1667],
         ];
 
         foreach ($cities as $city) {
@@ -33,11 +33,11 @@ class LocationSeeder extends Seeder
 
         if ($conakry) {
             $districts = [
-                ['name' => 'Kaloum', 'type' => 'district', 'parent_id' => $conakry->id],
-                ['name' => 'Dixinn', 'type' => 'district', 'parent_id' => $conakry->id],
-                ['name' => 'Ratoma', 'type' => 'district', 'parent_id' => $conakry->id],
-                ['name' => 'Matam', 'type' => 'district', 'parent_id' => $conakry->id],
-                ['name' => 'Matoto', 'type' => 'district', 'parent_id' => $conakry->id],
+                ['name' => 'Kaloum', 'slug' => "city-district9", 'type' => 'district', 'parent_id' => $conakry->id],
+                ['name' => 'Dixinn', 'slug' => "city-district10", 'type' => 'district', 'parent_id' => $conakry->id],
+                ['name' => 'Ratoma', 'slug' => "city-district11", 'type' => 'district', 'parent_id' => $conakry->id],
+                ['name' => 'Matam',  'slug' => "city-district02",'type' => 'district', 'parent_id' => $conakry->id],
+                ['name' => 'Matoto', 'slug' => "city-district03", 'type' => 'district', 'parent_id' => $conakry->id],
             ];
 
             foreach ($districts as $district) {

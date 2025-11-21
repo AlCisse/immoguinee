@@ -41,6 +41,7 @@ class PropertySeeder extends Seeder
                 'location_id' => $districts->isNotEmpty() ? $districts->random()->id : $locations->random()->id,
                 'title' => $this->generateTitle($type, $transactionType),
                 'description' => $this->generateDescription($type),
+                'slug' => "property-$i",
                 'type' => $type,
                 'transaction_type' => $transactionType,
                 'price' => $basePrice,

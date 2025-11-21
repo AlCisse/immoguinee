@@ -13,6 +13,7 @@ RUN apk add --no-cache \
 RUN addgroup -S docker 2>/dev/null || true && \
     addgroup node docker 2>/dev/null || true
 
+RUN git config --global --add safe.directory /var/www
 # Revenir à l'utilisateur node
 USER node
 
