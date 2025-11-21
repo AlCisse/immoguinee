@@ -2,32 +2,105 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
+@layer base {
+  * {
+    @apply antialiased;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-neutral-50 text-neutral-900;
+  }
+
+  /* Amélioration du focus pour l'accessibilité */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2 rounded;
+  }
+
+  /* Amélioration de la sélection de texte */
+  ::selection {
+    @apply bg-primary-100 text-primary-900;
   }
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+@layer components {
+  /* Smooth scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-neutral-100;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-neutral-300 rounded-full hover:bg-neutral-400;
+  }
+
+  /* Loading shimmer effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      #f0f0f0 0px,
+      #f8f8f8 40px,
+      #f0f0f0 80px
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Glass effect pour modals */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md border border-white/20;
+  }
+
+  /* Card hover effect */
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-hover;
+  }
+
+  /* Button ripple effect base */
+  .ripple-effect {
+    @apply relative overflow-hidden;
+  }
+
+  .ripple-effect::after {
+    content: '';
+    @apply absolute top-1/2 left-1/2 w-0 h-0 rounded-full bg-white/30;
+    @apply -translate-x-1/2 -translate-y-1/2;
+    transition: width 0.6s, height 0.6s;
+  }
+
+  .ripple-effect:active::after {
+    @apply w-40 h-40;
+  }
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent;
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    @apply transition-all duration-300 ease-smooth;
+  }
+
+  /* Hover lift effect */
+  .hover-lift {
+    @apply transition-transform duration-250 hover:-translate-y-0.5;
+  }
+
+  /* Focus ring amélioré */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
   }
 }
