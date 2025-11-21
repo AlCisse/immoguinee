@@ -1,0 +1,294 @@
+name: 🚀 Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+      - production
+  workflow_dispatch:
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME_LARAVEL: ${{ github.repository }}/laravel
+  IMAGE_NAME_NEXTJS: ${{ github.repository }}/nextjs
+
+jobs:
+  # ==========================================
+  # JOB 1: Tests et Sécurité
+  # ==========================================
+  test-and-security:
+    name: 🧪 Tests & Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      # Laravel Tests
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo, pgsql, redis, gd, zip
+          coverage: none
+
+      - name: 📦 Install Composer dependencies
+        working-directory: ./backend
+        run: |
+          composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: 🧪 Run Laravel Tests
+        working-directory: ./backend
+        run: |
+          php artisan test --parallel
+
+      - name: 🔒 Composer Security Audit
+        working-directory: ./backend
+        run: |
+          composer audit
+
+      # Next.js Tests
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/immoguinee/package-lock.json
+
+      - name: 📦 Install npm dependencies
+        working-directory: ./frontend/immoguinee
+        run: npm ci
+
+      - name: 🔍 Run ESLint
+        working-directory: ./frontend/immoguinee
+        run: npm run lint
+
+      - name: 🏗️ Build Next.js
+        working-directory: ./frontend/immoguinee
+        run: npm run build
+
+      - name: 🔒 NPM Security Audit
+        working-directory: ./frontend/immoguinee
+        run: npm audit --audit-level=high
+
+  # ==========================================
+  # JOB 2: Build Docker Images
+  # ==========================================
+  build:
+    name: 🐳 Build Docker Images
+    runs-on: ubuntu-latest
+    needs: test-and-security
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ Extract metadata
+        id: meta-laravel
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_LARAVEL }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🏷️ Extract metadata (Next.js)
+        id: meta-nextjs
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_NEXTJS }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build Laravel
+      - name: 🐳 Build and push Laravel image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/php/Dockerfile.production
+          push: true
+          tags: ${{ steps.meta-laravel.outputs.tags }}
+          labels: ${{ steps.meta-laravel.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            user=immo
+            uid=1000
+
+      # Build Next.js
+      - name: 🐳 Build and push Next.js image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/nextjs/Dockerfile.production
+          push: true
+          tags: ${{ steps.meta-nextjs.outputs.tags }}
+          labels: ${{ steps.meta-nextjs.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Scan images for vulnerabilities
+      - name: 🔍 Scan Laravel image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_LARAVEL }}:latest
+          format: 'sarif'
+          output: 'trivy-laravel.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: 🔍 Scan Next.js image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_NEXTJS }}:latest
+          format: 'sarif'
+          output: 'trivy-nextjs.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: 📊 Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: '.'
+
+  # ==========================================
+  # JOB 3: Deploy to VPS
+  # ==========================================
+  deploy:
+    name: 🚀 Deploy to Production VPS
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: production
+      url: https://votre-domaine.com
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 📦 Copy files to VPS
+        run: |
+          rsync -avz --delete \
+            --exclude '.git' \
+            --exclude 'node_modules' \
+            --exclude 'vendor' \
+            --exclude '.env' \
+            ./ ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/immoguinee/
+
+      - name: 🚀 Deploy on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/immoguinee
+
+            # Login to GitHub Container Registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+            # Pull latest images
+            docker pull ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_LARAVEL }}:latest
+            docker pull ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME_NEXTJS }}:latest
+
+            # Stop and remove old containers
+            docker-compose -f docker-compose.production.yml down
+
+            # Start new containers
+            docker-compose -f docker-compose.production.yml up -d
+
+            # Run Laravel migrations
+            docker exec immo_guinee_app_prod php artisan migrate --force
+
+            # Clear caches
+            docker exec immo_guinee_app_prod php artisan cache:clear
+            docker exec immo_guinee_app_prod php artisan config:cache
+            docker exec immo_guinee_app_prod php artisan route:cache
+            docker exec immo_guinee_app_prod php artisan view:cache
+
+            # Restart queue workers
+            docker exec immo_guinee_app_prod php artisan queue:restart
+
+            # Clean up old images
+            docker image prune -af --filter "until=24h"
+
+            echo "✅ Deployment completed successfully!"
+
+      - name: 🔍 Health Check
+        run: |
+          sleep 30
+          curl -f https://votre-domaine.com/health || exit 1
+          curl -f https://votre-domaine.com/api/health || exit 1
+
+  # ==========================================
+  # JOB 4: Purge Cloudflare Cache
+  # ==========================================
+  cloudflare:
+    name: ☁️ Purge Cloudflare Cache
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      - name: 🔄 Purge Cloudflare Cache
+        run: |
+          curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'
+
+  # ==========================================
+  # JOB 5: Notifications
+  # ==========================================
+  notify:
+    name: 📢 Send Notifications
+    runs-on: ubuntu-latest
+    needs: [deploy, cloudflare]
+    if: always()
+
+    steps:
+      - name: 📧 Send Slack notification
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            🚀 Deployment to Production
+            Status: ${{ job.status }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            Message: ${{ github.event.head_commit.message }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+        if: always()
+
+      - name: 📊 Deployment summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔗 Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [Production Site](https://votre-domaine.com)" >> $GITHUB_STEP_SUMMARY
+          echo "- [API Health](https://votre-domaine.com/api/health)" >> $GITHUB_STEP_SUMMARY

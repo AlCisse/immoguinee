@@ -1,0 +1,220 @@
+# ==========================================
+# MAKEFILE PRODUCTION - IMMO GUINÉE
+# ==========================================
+# Commandes simplifiées pour gérer la production
+# ==========================================
+
+.PHONY: help build up down restart logs status clean backup monitor audit deploy
+
+# Variables
+COMPOSE_FILE := docker-compose.production.yml
+COMPOSE := docker compose -f $(COMPOSE_FILE)
+
+# ==========================================
+# HELP
+# ==========================================
+help: ## Affiche l'aide
+	@echo "📚 Makefile Production - Immo Guinée"
+	@echo ""
+	@echo "Commandes disponibles :"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+# ==========================================
+# DOCKER
+# ==========================================
+build: ## Build les images Docker
+	@echo "🔨 Building Docker images..."
+	$(COMPOSE) build --no-cache
+
+up: ## Démarre tous les services
+	@echo "🚀 Starting services..."
+	$(COMPOSE) up -d
+	@echo "✅ Services started!"
+	@make status
+
+down: ## Arrête tous les services
+	@echo "🛑 Stopping services..."
+	$(COMPOSE) down
+	@echo "✅ Services stopped!"
+
+restart: ## Redémarre tous les services
+	@echo "🔄 Restarting services..."
+	$(COMPOSE) restart
+	@echo "✅ Services restarted!"
+
+status: ## Affiche le statut des services
+	@echo "📊 Services status:"
+	@$(COMPOSE) ps
+
+logs: ## Affiche les logs (usage: make logs SERVICE=nginx)
+	@if [ -z "$(SERVICE)" ]; then \
+		$(COMPOSE) logs --tail=100 -f; \
+	else \
+		$(COMPOSE) logs --tail=100 -f $(SERVICE); \
+	fi
+
+# ==========================================
+# LARAVEL
+# ==========================================
+laravel-shell: ## Accède au shell Laravel
+	@docker exec -it immo_guinee_app_prod bash
+
+laravel-migrate: ## Exécute les migrations Laravel
+	@echo "🗃️  Running Laravel migrations..."
+	@docker exec immo_guinee_app_prod php artisan migrate --force
+	@echo "✅ Migrations completed!"
+
+laravel-cache: ## Cache toutes les configurations Laravel
+	@echo "⚡ Caching Laravel configurations..."
+	@docker exec immo_guinee_app_prod php artisan config:cache
+	@docker exec immo_guinee_app_prod php artisan route:cache
+	@docker exec immo_guinee_app_prod php artisan view:cache
+	@echo "✅ Laravel cached!"
+
+laravel-clear: ## Vide tous les caches Laravel
+	@echo "🧹 Clearing Laravel caches..."
+	@docker exec immo_guinee_app_prod php artisan config:clear
+	@docker exec immo_guinee_app_prod php artisan cache:clear
+	@docker exec immo_guinee_app_prod php artisan route:clear
+	@docker exec immo_guinee_app_prod php artisan view:clear
+	@echo "✅ Caches cleared!"
+
+laravel-queue-restart: ## Redémarre les queue workers
+	@echo "🔄 Restarting queue workers..."
+	@docker exec immo_guinee_app_prod php artisan queue:restart
+	@echo "✅ Queue workers restarted!"
+
+# ==========================================
+# DATABASE
+# ==========================================
+db-shell: ## Accède au shell PostgreSQL
+	@docker exec -it immo_guinee_postgres_prod psql -U immo_user -d immo_guinee_db
+
+db-backup: ## Crée un backup de la base de données
+	@echo "💾 Creating database backup..."
+	@./scripts/backup-postgres.sh
+	@echo "✅ Backup completed!"
+
+db-restore: ## Restaure un backup (usage: make db-restore BACKUP=backup_file.sql.gz)
+	@if [ -z "$(BACKUP)" ]; then \
+		echo "❌ Usage: make db-restore BACKUP=backup_file.sql.gz"; \
+		exit 1; \
+	fi
+	@echo "📥 Restoring database from $(BACKUP)..."
+	@gunzip -c backups/postgres/$(BACKUP) > /tmp/restore.sql
+	@docker exec -i immo_guinee_postgres_prod psql -U immo_user -d immo_guinee_db < /tmp/restore.sql
+	@rm /tmp/restore.sql
+	@echo "✅ Database restored!"
+
+# ==========================================
+# MAINTENANCE
+# ==========================================
+backup: ## Exécute un backup complet
+	@echo "💾 Running full backup..."
+	@./scripts/backup-postgres.sh
+
+monitor: ## Exécute le monitoring système
+	@echo "📊 Running system monitoring..."
+	@./scripts/monitoring.sh
+
+audit: ## Exécute l'audit de sécurité
+	@echo "🔒 Running security audit..."
+	@./scripts/security-audit.sh
+
+clean: ## Nettoie Docker (images, containers)
+	@echo "🧹 Cleaning Docker..."
+	@docker image prune -af
+	@docker container prune -f
+	@echo "✅ Docker cleaned!"
+
+# ==========================================
+# DÉPLOIEMENT
+# ==========================================
+deploy: ## Déploie la dernière version
+	@echo "🚀 Deploying latest version..."
+	@git pull origin main
+	@$(COMPOSE) build
+	@$(COMPOSE) up -d --force-recreate
+	@docker exec immo_guinee_app_prod php artisan migrate --force
+	@make laravel-clear
+	@make laravel-cache
+	@make laravel-queue-restart
+	@./scripts/cloudflare-purge.sh all || true
+	@echo "✅ Deployment completed!"
+
+deploy-quick: ## Déploiement rapide (sans rebuild)
+	@echo "⚡ Quick deployment..."
+	@git pull origin main
+	@$(COMPOSE) up -d --force-recreate
+	@make laravel-clear
+	@make laravel-cache
+	@make laravel-queue-restart
+	@echo "✅ Quick deployment completed!"
+
+# ==========================================
+# CLOUDFLARE
+# ==========================================
+cf-purge-all: ## Purge tout le cache Cloudflare
+	@echo "🔄 Purging Cloudflare cache..."
+	@./scripts/cloudflare-purge.sh all
+	@echo "✅ Cloudflare cache purged!"
+
+# ==========================================
+# TESTS
+# ==========================================
+test: ## Lance les tests Laravel
+	@echo "🧪 Running Laravel tests..."
+	@docker exec immo_guinee_app_prod php artisan test
+
+health: ## Vérifie la santé des services
+	@echo "🏥 Health check..."
+	@curl -f http://localhost/health || echo "❌ Nginx health check failed"
+	@curl -f http://localhost/api/health || echo "❌ Laravel health check failed"
+	@curl -f http://localhost:3000/api/health || echo "❌ Next.js health check failed"
+	@echo "✅ Health check completed!"
+
+# ==========================================
+# LOGS SPÉCIFIQUES
+# ==========================================
+logs-nginx: ## Logs Nginx
+	@$(COMPOSE) logs --tail=100 -f nginx
+
+logs-laravel: ## Logs Laravel
+	@$(COMPOSE) logs --tail=100 -f app
+
+logs-nextjs: ## Logs Next.js
+	@$(COMPOSE) logs --tail=100 -f nextjs
+
+logs-postgres: ## Logs PostgreSQL
+	@$(COMPOSE) logs --tail=100 -f postgres
+
+logs-redis: ## Logs Redis
+	@$(COMPOSE) logs --tail=100 -f redis
+
+logs-queue: ## Logs Queue Workers
+	@$(COMPOSE) logs --tail=100 -f queue
+
+# ==========================================
+# STATS
+# ==========================================
+stats: ## Affiche les stats Docker
+	@docker stats --no-stream
+
+disk: ## Affiche l'utilisation du disque
+	@echo "💾 Disk usage:"
+	@df -h
+	@echo ""
+	@echo "📦 Docker disk usage:"
+	@docker system df
+
+# ==========================================
+# EXEMPLES D'UTILISATION
+# ==========================================
+# make build          # Build les images
+# make up             # Démarre les services
+# make logs           # Affiche tous les logs
+# make logs SERVICE=nginx  # Logs d'un service spécifique
+# make laravel-migrate     # Migre la base de données
+# make backup         # Backup PostgreSQL
+# make deploy         # Déploie la nouvelle version
+# make health         # Vérifie la santé des services

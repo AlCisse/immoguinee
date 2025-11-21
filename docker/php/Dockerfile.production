@@ -1,0 +1,172 @@
+# ==========================================
+# STAGE 1: Builder - Installation des dépendances
+# ==========================================
+FROM php:8.2-fpm-alpine AS builder
+
+# Arguments
+ARG user=immo
+ARG uid=1000
+
+# Installation des dépendances système (Alpine Linux - plus léger)
+RUN apk add --no-cache \
+    git \
+    curl \
+    libpng-dev \
+    oniguruma-dev \
+    libxml2-dev \
+    libzip-dev \
+    icu-dev \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libwebp-dev \
+    postgresql-dev \
+    postgresql-client \
+    jpegoptim optipng pngquant gifsicle \
+    imagemagick-dev \
+    autoconf \
+    g++ \
+    make \
+    linux-headers
+
+# Installation des extensions PHP
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j$(nproc) \
+    pdo_pgsql \
+    pgsql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl \
+    opcache
+
+# Installation de Redis et Imagick
+RUN pecl install redis-6.0.2 imagick-3.7.0 \
+    && docker-php-ext-enable redis imagick
+
+# Installation de Composer
+COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
+
+# Définir le répertoire de travail
+WORKDIR /var/www
+
+# Copier les fichiers de dépendances
+COPY backend/composer.json backend/composer.lock ./
+
+# Installer les dépendances PHP (optimisé pour production)
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-progress \
+    --no-scripts \
+    --prefer-dist \
+    --optimize-autoloader \
+    --classmap-authoritative
+
+# ==========================================
+# STAGE 2: Production - Image finale optimisée
+# ==========================================
+FROM php:8.2-fpm-alpine AS production
+
+# Arguments
+ARG user=immo
+ARG uid=1000
+
+# Labels pour documentation
+LABEL maintainer="Immo Guinée Dev Team"
+LABEL description="Laravel optimisé pour production avec OPcache"
+LABEL version="2.0.0"
+
+# Installation UNIQUEMENT des dépendances runtime nécessaires
+RUN apk add --no-cache \
+    libpng \
+    oniguruma \
+    libxml2 \
+    libzip \
+    icu \
+    freetype \
+    libjpeg-turbo \
+    libwebp \
+    postgresql-libs \
+    postgresql-client \
+    jpegoptim optipng pngquant gifsicle \
+    imagemagick \
+    && rm -rf /var/cache/apk/*
+
+# Copier les extensions PHP compilées depuis le builder
+COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+
+# Configuration PHP optimisée pour production
+RUN echo "memory_limit = 256M" > /usr/local/etc/php/conf.d/docker-php-memlimit.ini \
+    && echo "upload_max_filesize = 100M" >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini \
+    && echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini \
+    && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini \
+    && echo "max_input_time = 300" >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini
+
+# Configuration OPcache optimisée
+RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.interned_strings_buffer=16" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.save_comments=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.fast_shutdown=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.enable_cli=0" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.revalidate_freq=0" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.file_cache=/tmp/opcache" >> /usr/local/etc/php/conf.d/opcache.ini
+
+# Configuration PHP-FPM optimisée
+RUN echo "pm = dynamic" > /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && echo "pm.max_children = 50" >> /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && echo "pm.start_servers = 10" >> /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && echo "pm.min_spare_servers = 5" >> /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && echo "pm.max_spare_servers = 20" >> /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && echo "pm.max_requests = 500" >> /usr/local/etc/php-fpm.d/zz-docker.conf \
+    && echo "request_terminate_timeout = 300" >> /usr/local/etc/php-fpm.d/zz-docker.conf
+
+# Création de l'utilisateur système non-root
+RUN addgroup -g $uid $user \
+    && adduser -D -u $uid -G $user $user \
+    && addgroup $user www-data
+
+# Créer les répertoires nécessaires
+RUN mkdir -p /var/www/storage /var/www/bootstrap/cache /tmp/opcache \
+    && chown -R $user:$user /var/www /tmp/opcache
+
+# Définir le répertoire de travail
+WORKDIR /var/www
+
+# Copier Composer depuis le builder
+COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
+
+# Copier les dépendances installées depuis le builder
+COPY --from=builder --chown=$user:$user /var/www/vendor ./vendor
+
+# Copier le code source de l'application
+COPY --chown=$user:$user backend/ ./
+
+# Optimiser Laravel pour production
+RUN composer dump-autoload --optimize --classmap-authoritative \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
+
+# Définir les permissions finales
+RUN chown -R $user:$user /var/www/storage /var/www/bootstrap/cache \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# Passer à l'utilisateur non-root
+USER $user
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD php-fpm-healthcheck || exit 1
+
+# Exposer le port
+EXPOSE 9000
+
+# Commande de démarrage
+CMD ["php-fpm"]

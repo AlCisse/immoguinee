@@ -110,6 +110,15 @@ const nextConfig = {
 
   // Power par métadonnées
   poweredByHeader: false,
+
+  // Mode standalone pour Docker (optimisation production)
+  output: 'standalone',
+
+  // Optimisations ISR (Incremental Static Regeneration)
+  experimental: {
+    // Active le cache ISR optimisé
+    isrMemoryCacheSize: 50 * 1024 * 1024, // 50MB
+  },
 };
 
 module.exports = nextConfig;

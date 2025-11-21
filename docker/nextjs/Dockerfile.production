@@ -1,0 +1,81 @@
+# ==========================================
+# STAGE 1: Dependencies - Installation des dépendances
+# ==========================================
+FROM node:20-alpine AS deps
+
+# Labels pour documentation
+LABEL maintainer="Immo Guinée Dev Team"
+LABEL description="Next.js optimisé pour production avec SSG/ISR"
+LABEL version="2.0.0"
+
+# Installation des dépendances système nécessaires
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Copier les fichiers de dépendances
+COPY frontend/immoguinee/package.json frontend/immoguinee/package-lock.json* ./
+
+# Installer les dépendances (production + dev pour le build)
+RUN npm ci
+
+# ==========================================
+# STAGE 2: Builder - Build de l'application
+# ==========================================
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copier node_modules depuis deps
+COPY --from=deps /app/node_modules ./node_modules
+
+# Copier le code source
+COPY frontend/immoguinee/ ./
+
+# Variables d'environnement pour le build
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production
+
+# Build Next.js avec optimisations
+RUN npm run build
+
+# ==========================================
+# STAGE 3: Runner - Image finale optimisée
+# ==========================================
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Créer un utilisateur non-root
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nextjs
+
+# Copier les fichiers publics
+COPY --from=builder /app/public ./public
+
+# Définir les permissions correctes avant de copier
+RUN mkdir .next && chown nextjs:nodejs .next
+
+# Copier les fichiers buildés avec le bon propriétaire
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Passer à l'utilisateur non-root
+USER nextjs
+
+# Exposer le port
+EXPOSE 3000
+
+# Variables d'environnement
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" || exit 1
+
+# Commande de démarrage
+CMD ["node", "server.js"]
