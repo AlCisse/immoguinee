@@ -1,0 +1,208 @@
+# ==========================================
+# MAKEFILE LOCAL - TESTS LOCAUX
+# ==========================================
+# Commandes simplifiées pour tester en local
+# ==========================================
+
+.PHONY: help build up down restart logs status test clean
+
+# Variables
+COMPOSE_FILE := docker-compose.local.yml
+COMPOSE := docker compose -f $(COMPOSE_FILE)
+
+# ==========================================
+# HELP
+# ==========================================
+help: ## Affiche l'aide
+	@echo "📚 Makefile Tests Locaux - Immo Guinée"
+	@echo ""
+	@echo "Commandes disponibles :"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+# ==========================================
+# SETUP
+# ==========================================
+setup: ## Setup complet (première utilisation)
+	@echo "🔧 Setup complet..."
+	@echo "1. Création du fichier .env Laravel..."
+	@cd backend && cp .env.example .env
+	@echo "2. Installation des dépendances Composer..."
+	@docker run --rm -v $(PWD)/backend:/app -w /app composer:2.7 composer install
+	@echo "3. Génération de la clé Laravel..."
+	@docker run --rm -v $(PWD)/backend:/app -w /app php:8.2-cli php artisan key:generate
+	@echo "✅ Setup terminé! Vous pouvez maintenant lancer 'make build'"
+
+# ==========================================
+# DOCKER
+# ==========================================
+build: ## Build les images Docker
+	@echo "🔨 Building Docker images..."
+	$(COMPOSE) build --no-cache
+	@echo "✅ Images built!"
+
+up: ## Démarre tous les services
+	@echo "🚀 Starting services..."
+	$(COMPOSE) up -d
+	@echo "⏳ Waiting for services to be healthy (30s)..."
+	@sleep 30
+	@echo "✅ Services started!"
+	@make status
+
+down: ## Arrête tous les services
+	@echo "🛑 Stopping services..."
+	$(COMPOSE) down
+	@echo "✅ Services stopped!"
+
+restart: ## Redémarre tous les services
+	@echo "🔄 Restarting services..."
+	$(COMPOSE) restart
+	@echo "✅ Services restarted!"
+
+status: ## Affiche le statut des services
+	@echo "📊 Services status:"
+	@$(COMPOSE) ps
+
+logs: ## Affiche les logs (usage: make logs SERVICE=nginx)
+	@if [ -z "$(SERVICE)" ]; then \
+		$(COMPOSE) logs --tail=100 -f; \
+	else \
+		$(COMPOSE) logs --tail=100 -f $(SERVICE); \
+	fi
+
+# ==========================================
+# LARAVEL
+# ==========================================
+laravel-shell: ## Accède au shell Laravel
+	@docker exec -it immo_local_app bash
+
+laravel-migrate: ## Exécute les migrations Laravel
+	@echo "🗃️  Running Laravel migrations..."
+	@docker exec immo_local_app php artisan migrate --force
+	@echo "✅ Migrations completed!"
+
+laravel-seed: ## Seed la base de données
+	@echo "🌱 Seeding database..."
+	@docker exec immo_local_app php artisan db:seed --force
+	@echo "✅ Database seeded!"
+
+laravel-fresh: ## Reset et migre la base de données
+	@echo "🔄 Resetting database..."
+	@docker exec immo_local_app php artisan migrate:fresh --seed --force
+	@echo "✅ Database reset!"
+
+laravel-test: ## Lance les tests Laravel
+	@echo "🧪 Running Laravel tests..."
+	@docker exec immo_local_app php artisan test
+
+# ==========================================
+# DATABASE
+# ==========================================
+db-shell: ## Accède au shell PostgreSQL
+	@docker exec -it immo_local_postgres psql -U immo_user -d immo_guinee_db
+
+db-reset: ## Reset la base de données
+	@echo "🔄 Resetting database..."
+	@$(COMPOSE) stop postgres
+	@docker volume rm immoguinee_postgres_local_data || true
+	@$(COMPOSE) up -d postgres
+	@sleep 10
+	@make laravel-migrate
+	@echo "✅ Database reset!"
+
+# ==========================================
+# TESTS
+# ==========================================
+test: ## Exécute tous les tests automatiques
+	@echo "🧪 Running validation tests..."
+	@./scripts/test-local.sh
+
+test-quick: ## Tests rapides (health checks seulement)
+	@echo "⚡ Quick health checks..."
+	@echo "Testing Nginx..."
+	@curl -sf http://localhost:8080/health || echo "❌ Nginx failed"
+	@echo "Testing Laravel API..."
+	@curl -sf http://localhost:8080/api/health || echo "❌ Laravel failed"
+	@echo "Testing Next.js..."
+	@curl -sf http://localhost:3000/api/health || echo "❌ Next.js failed"
+	@echo "✅ Quick tests completed!"
+
+health: ## Vérifie la santé des services
+	@echo "🏥 Health check..."
+	@curl -f http://localhost:8080/health && echo "✓ Nginx OK" || echo "✗ Nginx FAIL"
+	@curl -f http://localhost:8080/api/health && echo "✓ Laravel OK" || echo "✗ Laravel FAIL"
+	@curl -f http://localhost:3000/api/health && echo "✓ Next.js OK" || echo "✗ Next.js FAIL"
+
+# ==========================================
+# NETTOYAGE
+# ==========================================
+clean: ## Nettoie Docker (containers et volumes)
+	@echo "🧹 Cleaning Docker..."
+	$(COMPOSE) down -v
+	@docker image prune -af
+	@echo "✅ Docker cleaned!"
+
+clean-all: ## Nettoie tout (⚠️ supprime les images aussi)
+	@echo "🧹 Cleaning everything..."
+	$(COMPOSE) down -v
+	@docker rmi immoguinee/laravel:local || true
+	@docker rmi immoguinee/nextjs:local || true
+	@docker system prune -af
+	@echo "✅ Everything cleaned!"
+
+# ==========================================
+# LOGS SPÉCIFIQUES
+# ==========================================
+logs-nginx: ## Logs Nginx
+	@$(COMPOSE) logs --tail=100 -f nginx
+
+logs-laravel: ## Logs Laravel
+	@$(COMPOSE) logs --tail=100 -f app
+
+logs-nextjs: ## Logs Next.js
+	@$(COMPOSE) logs --tail=100 -f nextjs
+
+logs-postgres: ## Logs PostgreSQL
+	@$(COMPOSE) logs --tail=100 -f postgres
+
+logs-redis: ## Logs Redis
+	@$(COMPOSE) logs --tail=100 -f redis
+
+logs-queue: ## Logs Queue Workers
+	@$(COMPOSE) logs --tail=100 -f queue
+
+# ==========================================
+# STATS
+# ==========================================
+stats: ## Affiche les stats Docker
+	@docker stats --no-stream
+
+# ==========================================
+# WORKFLOW COMPLET
+# ==========================================
+start-fresh: ## Workflow complet (première utilisation)
+	@echo "🚀 Starting fresh installation..."
+	@make setup
+	@make build
+	@make up
+	@make laravel-migrate
+	@make test
+	@echo "✅ Installation complete! Access:"
+	@echo "  - Nginx: http://localhost:8080"
+	@echo "  - Next.js: http://localhost:3000"
+	@echo "  - API: http://localhost:8080/api/health"
+
+# ==========================================
+# EXEMPLES D'UTILISATION
+# ==========================================
+# make setup          # Setup initial (première fois)
+# make build          # Build les images
+# make up             # Démarre les services
+# make status         # Voir le statut
+# make logs           # Voir tous les logs
+# make logs SERVICE=nginx  # Logs d'un service
+# make test           # Tests complets
+# make test-quick     # Tests rapides
+# make health         # Health checks
+# make laravel-migrate     # Migrer la BDD
+# make clean          # Nettoyer
+# make start-fresh    # Workflow complet
