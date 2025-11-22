@@ -59,7 +59,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: ./docker/php/Dockerfile.production
+      dockerfile: ./docker/php/Dockerfile.local
       args:
         user: immo
         uid: 1000
@@ -68,8 +68,11 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     environment:
+      APP_NAME: "ImmoGuinée"
       APP_ENV: local
+      APP_KEY: "base64:YOUR_APP_KEY_WILL_BE_GENERATED"
       APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
@@ -82,6 +85,8 @@ services:
       CACHE_DRIVER: redis
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: redis
+      LOG_CHANNEL: stack
+      LOG_LEVEL: debug
     volumes:
       - ./backend:/var/www
       - ./backend/storage:/var/www/storage
@@ -106,7 +111,7 @@ services:
   queue:
     build:
       context: .
-      dockerfile: ./docker/php/Dockerfile.production
+      dockerfile: ./docker/php/Dockerfile.local
       args:
         user: immo
         uid: 1000
@@ -115,8 +120,11 @@ services:
     restart: unless-stopped
     working_dir: /var/www
     environment:
+      APP_NAME: "ImmoGuinée"
       APP_ENV: local
+      APP_KEY: "base64:YOUR_APP_KEY_WILL_BE_GENERATED"
       APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
       DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
@@ -127,6 +135,8 @@ services:
       REDIS_PASSWORD: null
       REDIS_PORT: 6379
       QUEUE_CONNECTION: redis
+      LOG_CHANNEL: stack
+      LOG_LEVEL: debug
     volumes:
       - ./backend:/var/www
       - ./backend/storage:/var/www/storage
