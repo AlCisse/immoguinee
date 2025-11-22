@@ -19,6 +19,12 @@ export default function PropertyDetailPage() {
 
   useEffect(() => {
     const fetchProperty = async () => {
+      if (!params?.id) {
+        setError('ID de propriété manquant')
+        setLoading(false)
+        return
+      }
+
       try {
         const data = await propertyService.getProperty(Number(params.id))
         setProperty(data)
@@ -29,10 +35,8 @@ export default function PropertyDetailPage() {
       }
     }
 
-    if (params.id) {
-      fetchProperty()
-    }
-  }, [params.id])
+    fetchProperty()
+  }, [params?.id])
 
   if (loading) {
     return (

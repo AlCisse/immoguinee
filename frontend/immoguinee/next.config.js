@@ -4,7 +4,7 @@ const nextConfig = {
 
   // Variables d'environnement
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api',
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   },
 
@@ -15,7 +15,7 @@ const nextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '8000',
+        port: '8080',
         pathname: '/storage/**',
       },
       {
@@ -81,7 +81,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' http://localhost:8000 ws://localhost:*",
+              "connect-src 'self' http://localhost:8080 ws://localhost:*",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
@@ -97,7 +97,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/:path*`,
       },
     ];
   },
@@ -114,11 +114,8 @@ const nextConfig = {
   // Mode standalone pour Docker (optimisation production)
   output: 'standalone',
 
-  // Optimisations ISR (Incremental Static Regeneration)
-  experimental: {
-    // Active le cache ISR optimisé
-    isrMemoryCacheSize: 50 * 1024 * 1024, // 50MB
-  },
+  // Cache ISR optimisé (50MB)
+  cacheMaxMemorySize: 50 * 1024 * 1024,
 };
 
 module.exports = nextConfig;
