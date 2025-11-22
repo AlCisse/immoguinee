@@ -1,0 +1,87 @@
+# ==========================================
+# DOCKERFILE LOCAL - Pour tests en développement
+# Version simplifiée sans optimisations de production
+# ==========================================
+
+FROM php:8.2-fpm-alpine
+
+# Arguments
+ARG user=immo
+ARG uid=1000
+
+# Installation des dépendances système
+RUN apk add --no-cache \
+    git \
+    curl \
+    libpng-dev \
+    oniguruma-dev \
+    libxml2-dev \
+    libzip-dev \
+    icu-dev \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libwebp-dev \
+    postgresql-dev \
+    postgresql-client \
+    jpegoptim optipng pngquant gifsicle \
+    autoconf \
+    g++ \
+    make \
+    linux-headers \
+    && rm -rf /var/cache/apk/*
+
+# Installation des extensions PHP
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install -j$(nproc) \
+    pdo_pgsql \
+    pgsql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl \
+    opcache
+
+# Installation de Redis
+RUN pecl install redis-6.0.2 \
+    && docker-php-ext-enable redis
+
+# Configuration PHP pour DÉVELOPPEMENT
+RUN echo "memory_limit = 512M" > /usr/local/etc/php/conf.d/docker-php-local.ini \
+    && echo "upload_max_filesize = 100M" >> /usr/local/etc/php/conf.d/docker-php-local.ini \
+    && echo "post_max_size = 100M" >> /usr/local/etc/php/conf.d/docker-php-local.ini \
+    && echo "max_execution_time = 300" >> /usr/local/etc/php/conf.d/docker-php-local.ini \
+    && echo "display_errors = On" >> /usr/local/etc/php/conf.d/docker-php-local.ini \
+    && echo "error_reporting = E_ALL" >> /usr/local/etc/php/conf.d/docker-php-local.ini
+
+# OPcache pour développement (avec détection des modifications)
+RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.memory_consumption=128" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.validate_timestamps=1" >> /usr/local/etc/php/conf.d/opcache.ini \
+    && echo "opcache.revalidate_freq=2" >> /usr/local/etc/php/conf.d/opcache.ini
+
+# Installation de Composer
+COPY --from=composer:2.7 /usr/bin/composer /usr/bin/composer
+
+# Création de l'utilisateur non-root
+RUN addgroup -g $uid $user \
+    && adduser -D -u $uid -G $user $user \
+    && addgroup $user www-data
+
+# Créer les répertoires
+RUN mkdir -p /var/www/storage /var/www/bootstrap/cache \
+    && chown -R $user:$user /var/www
+
+# Définir le répertoire de travail
+WORKDIR /var/www
+
+# Passer à l'utilisateur non-root
+USER $user
+
+# Exposer le port
+EXPOSE 9000
+
+# Commande de démarrage
+CMD ["php-fpm"]

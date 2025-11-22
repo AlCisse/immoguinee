@@ -25,12 +25,15 @@ help: ## Affiche l'aide
 setup: ## Setup complet (première utilisation)
 	@echo "🔧 Setup complet..."
 	@echo "1. Création du fichier .env Laravel..."
-	@cd backend && cp .env.example .env
-	@echo "2. Installation des dépendances Composer..."
-	@docker run --rm -v $(PWD)/backend:/app -w /app composer:2.7 composer install
-	@echo "3. Génération de la clé Laravel..."
-	@docker run --rm -v $(PWD)/backend:/app -w /app php:8.2-cli php artisan key:generate
+	@cd backend && cp .env.example .env || true
+	@echo "2. Création du fichier .env Next.js..."
+	@cd frontend/immoguinee && cp .env.local.example .env.local || true
 	@echo "✅ Setup terminé! Vous pouvez maintenant lancer 'make build'"
+
+laravel-setup: ## Initialise Laravel (après build et up)
+	@echo "🔧 Initialisation Laravel..."
+	@chmod +x scripts/setup-laravel-local.sh
+	@./scripts/setup-laravel-local.sh
 
 # ==========================================
 # DOCKER
@@ -181,15 +184,19 @@ stats: ## Affiche les stats Docker
 # ==========================================
 start-fresh: ## Workflow complet (première utilisation)
 	@echo "🚀 Starting fresh installation..."
+	@make clean
 	@make setup
 	@make build
 	@make up
-	@make laravel-migrate
-	@make test
+	@sleep 10
+	@make laravel-setup
+	@make test-quick
+	@echo ""
 	@echo "✅ Installation complete! Access:"
 	@echo "  - Nginx: http://localhost:8080"
 	@echo "  - Next.js: http://localhost:3000"
 	@echo "  - API: http://localhost:8080/api/health"
+	@echo ""
 
 # ==========================================
 # EXEMPLES D'UTILISATION
