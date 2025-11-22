@@ -12,7 +12,7 @@ const nextConfig = {
 
   // Variables d'environnement
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api',
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
   },
 
@@ -23,7 +23,7 @@ const nextConfig = {
       {
         protocol: 'http',
         hostname: 'localhost',
-        port: '8000',
+        port: '8080',
         pathname: '/storage/**',
       },
       {
@@ -73,6 +73,21 @@ const nextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(self)',
           },
+          // Content Security Policy
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "img-src 'self' data: https: blob:",
+              "font-src 'self' https://fonts.gstatic.com",
+              "connect-src 'self' http://localhost:8000 ws://localhost:*",
+              "frame-ancestors 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
         ],
       },
     ]
@@ -83,7 +98,7 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/:path*`,
       },
     ];
   },
@@ -96,7 +111,8 @@ const nextConfig = {
 
   // Optimisations ISR (Incremental Static Regeneration)
   experimental: {
-    cacheMaxMemorySize: 50 * 1024 * 1024, // 50MB - nom corrigé
+    // Active le cache ISR optimisé
+    isrMemoryCacheSize: 50 * 1024 * 1024, // 50MB
   },
 };
 
