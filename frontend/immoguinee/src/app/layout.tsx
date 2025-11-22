@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     description: 'La plateforme immobilière de référence pour acheter, vendre ou louer des propriétés en Guinée.',
     images: [
       {
-        url: '/og-image.jpg',
+        url: 'https://i0.wp.com/www.guinee360.com/wp-content/uploads/2024/07/IMG_20240709_164312_700_x_380_pixel.jpg?fit=700%2C380&ssl=1',
         width: 1200,
         height: 630,
         alt: 'ImmoGuinée - Trouvez votre propriété idéale',
