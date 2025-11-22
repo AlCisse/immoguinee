@@ -53,10 +53,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 nextjs
 
-# Copier les fichiers publics
-COPY --from=builder /app/public ./public
+# Copier les fichiers publics (assets statiques)
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Définir les permissions correctes avant de copier
+# Créer le répertoire .next avec les bonnes permissions
 RUN mkdir .next && chown nextjs:nodejs .next
 
 # Copier les fichiers buildés avec le bon propriétaire
