@@ -23,7 +23,7 @@ interface AuthResponse {
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
     const response = await apiClient.post<ApiResponse<AuthResponse>>(
-      '/auth/login',
+      '/v1/auth/login',
       credentials
     )
 
@@ -36,7 +36,7 @@ export const authService = {
 
   async register(data: RegisterData): Promise<AuthResponse> {
     const response = await apiClient.post<ApiResponse<AuthResponse>>(
-      '/auth/register',
+      '/v1/auth/register',
       data
     )
 
@@ -48,23 +48,23 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
-    await apiClient.post('/auth/logout')
+    await apiClient.post('/v1/auth/logout')
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token')
     }
   },
 
   async getCurrentUser(): Promise<User> {
-    const response = await apiClient.get<ApiResponse<User>>('/auth/user')
+    const response = await apiClient.get<ApiResponse<User>>('/v1/auth/me')
     return response.data
   },
 
   async forgotPassword(email: string): Promise<void> {
-    await apiClient.post('/auth/forgot-password', { email })
+    await apiClient.post('/v1/auth/forgot-password', { email })
   },
 
   async resetPassword(token: string, email: string, password: string): Promise<void> {
-    await apiClient.post('/auth/reset-password', {
+    await apiClient.post('/v1/auth/reset-password', {
       token,
       email,
       password,
