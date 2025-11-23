@@ -5,6 +5,9 @@ class ApiClient {
   private client: AxiosInstance
 
   constructor() {
+    // Initialiser le token depuis le cookie au chargement
+    this.initializeToken()
+
     this.client = axios.create({
       baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api',
       headers: {
@@ -44,6 +47,22 @@ class ApiClient {
     )
   }
 
+  private initializeToken(): void {
+    if (typeof window !== 'undefined') {
+      const localToken = localStorage.getItem('auth_token')
+      const cookieToken = cookies.get('auth_token')
+
+      // Si le cookie existe mais pas localStorage, synchroniser
+      if (cookieToken && !localToken) {
+        localStorage.setItem('auth_token', cookieToken)
+      }
+      // Si localStorage existe mais pas le cookie, synchroniser
+      else if (localToken && !cookieToken) {
+        cookies.set('auth_token', localToken, 7)
+      }
+    }
+  }
+
   private getAuthToken(): string | null {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('auth_token')
@@ -61,7 +80,12 @@ class ApiClient {
   public setAuthToken(token: string): void {
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_token', token)
+      cookies.set('auth_token', token, 7) // 7 jours
     }
+  }
+
+  public clearAuthToken(): void {
+    this.removeAuthToken()
   }
 
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {

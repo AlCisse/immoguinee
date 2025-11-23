@@ -1,5 +1,4 @@
 import { apiClient } from '@/lib/api-client'
-import { cookies } from '@/lib/cookies'
 import { User, ApiResponse } from '@/types'
 
 interface LoginCredentials {
@@ -29,9 +28,8 @@ export const authService = {
     )
 
     if (response.data.token) {
-      // Stocker dans localStorage ET dans un cookie
+      // setAuthToken gère localStorage + cookie automatiquement
       apiClient.setAuthToken(response.data.token)
-      cookies.set('auth_token', response.data.token, 7) // 7 jours
     }
 
     return response.data
@@ -44,9 +42,8 @@ export const authService = {
     )
 
     if (response.data.token) {
-      // Stocker dans localStorage ET dans un cookie
+      // setAuthToken gère localStorage + cookie automatiquement
       apiClient.setAuthToken(response.data.token)
-      cookies.set('auth_token', response.data.token, 7) // 7 jours
     }
 
     return response.data
@@ -54,10 +51,7 @@ export const authService = {
 
   async logout(): Promise<void> {
     await apiClient.post('/v1/auth/logout')
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token')
-      cookies.remove('auth_token')
-    }
+    apiClient.clearAuthToken()
   },
 
   async getCurrentUser(): Promise<User> {
