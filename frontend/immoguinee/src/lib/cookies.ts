@@ -12,7 +12,12 @@ export const cookies = {
     const expires = new Date()
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
 
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`
+    const cookieString = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`
+    document.cookie = cookieString
+
+    console.log('🍪 Cookie set:', name, '=', value.substring(0, 20) + '...')
+    console.log('🍪 Cookie string:', cookieString)
+    console.log('🍪 All cookies:', document.cookie)
   },
 
   /**
