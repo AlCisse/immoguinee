@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import { cookies } from './cookies'
 
 class ApiClient {
   private client: AxiosInstance
@@ -53,6 +54,7 @@ class ApiClient {
   private removeAuthToken(): void {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token')
+      cookies.remove('auth_token')
     }
   }
 
