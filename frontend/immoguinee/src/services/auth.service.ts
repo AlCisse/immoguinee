@@ -28,8 +28,15 @@ export const authService = {
     )
 
     if (response.data.token) {
-      // setAuthToken gère localStorage + cookie automatiquement
+      // Stocker dans localStorage
       apiClient.setAuthToken(response.data.token)
+
+      // Définir le cookie côté serveur via API Route
+      await fetch('/api/auth/set-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: response.data.token }),
+      })
     }
 
     return response.data
@@ -42,8 +49,15 @@ export const authService = {
     )
 
     if (response.data.token) {
-      // setAuthToken gère localStorage + cookie automatiquement
+      // Stocker dans localStorage
       apiClient.setAuthToken(response.data.token)
+
+      // Définir le cookie côté serveur via API Route
+      await fetch('/api/auth/set-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: response.data.token }),
+      })
     }
 
     return response.data
@@ -52,6 +66,11 @@ export const authService = {
   async logout(): Promise<void> {
     await apiClient.post('/v1/auth/logout')
     apiClient.clearAuthToken()
+
+    // Supprimer le cookie côté serveur
+    await fetch('/api/auth/set-token', {
+      method: 'DELETE',
+    })
   },
 
   async getCurrentUser(): Promise<User> {
