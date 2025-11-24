@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,9 +8,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Token is required' }, { status: 400 })
     }
 
-    // Définir le cookie côté serveur avec Next.js
-    const cookieStore = await cookies()
-    cookieStore.set('auth_token', token, {
+    // Créer une réponse avec le cookie
+    const response = NextResponse.json({ success: true })
+
+    // Définir le cookie dans la réponse
+    response.cookies.set('auth_token', token, {
       httpOnly: false, // Doit être accessible côté client pour les requêtes API
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -19,22 +20,30 @@ export async function POST(request: NextRequest) {
       path: '/',
     })
 
-    return NextResponse.json({ success: true })
+    return response
   } catch (error) {
-    console.error('Error setting token:', error)
+    console.error('❌ Error setting token:', error)
     return NextResponse.json({ error: 'Failed to set token' }, { status: 500 })
   }
 }
 
 export async function DELETE() {
   try {
-    // Supprimer le cookie côté serveur
-    const cookieStore = await cookies()
-    cookieStore.delete('auth_token')
+    // Créer une réponse avec suppression du cookie
+    const response = NextResponse.json({ success: true })
 
-    return NextResponse.json({ success: true })
+    // Supprimer le cookie en définissant maxAge à 0
+    response.cookies.set('auth_token', '', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 0,
+      path: '/',
+    })
+
+    return response
   } catch (error) {
-    console.error('Error deleting token:', error)
+    console.error('❌ Error deleting token:', error)
     return NextResponse.json({ error: 'Failed to delete token' }, { status: 500 })
   }
 }
