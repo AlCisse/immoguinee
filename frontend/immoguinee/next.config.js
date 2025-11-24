@@ -93,11 +93,12 @@ const nextConfig = {
   },
 
   // Support for API routes
+  // IMPORTANT: Ne pas rediriger les routes API internes de Next.js (/api/auth/*)
   async rewrites() {
     return [
       {
-        source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/:path*`,
+        source: '/api/v1/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/v1/:path*`,
       },
     ];
   },
@@ -111,8 +112,9 @@ const nextConfig = {
   // Power par métadonnées
   poweredByHeader: false,
 
-  // Mode standalone pour Docker (optimisation production)
-  output: 'standalone',
+  // Mode standalone pour Docker (optimisation production seulement)
+  // Désactivé en développement car ça peut bloquer le middleware
+  output: process.env.NODE_ENV === 'production' ? 'standalone' : undefined,
 
   // Cache ISR optimisé (50MB)
   cacheMaxMemorySize: 50 * 1024 * 1024,
