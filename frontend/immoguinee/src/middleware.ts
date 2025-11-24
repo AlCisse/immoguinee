@@ -11,37 +11,38 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value
   const pathname = request.nextUrl.pathname
 
-  // Debug logs TRÈS visibles
-  console.log('='.repeat(80))
-  console.log('🔒 MIDDLEWARE EXECUTING:', pathname)
-  console.log('🍪 Token from cookie:', token ? `${token.substring(0, 30)}...` : 'NO TOKEN FOUND')
-  console.log('🍪 All cookies names:', request.cookies.getAll().map(c => c.name).join(', '))
-  console.log('🍪 All cookies:', JSON.stringify(request.cookies.getAll()))
-  console.log('='.repeat(80))
-
   // Vérifier si la route est protégée
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
 
-  console.log(`📍 Is protected route? ${isProtectedRoute}`)
-  console.log(`📍 Is auth route? ${isAuthRoute}`)
+  // Créer une réponse avec headers de debug
+  const response = NextResponse.next()
+
+  // Ajouter des headers de debug (visibles dans Chrome DevTools)
+  response.headers.set('X-Middleware-Executed', 'true')
+  response.headers.set('X-Has-Token', token ? 'yes' : 'no')
+  response.headers.set('X-Token-Preview', token ? token.substring(0, 20) : 'none')
+  response.headers.set('X-Is-Protected', isProtectedRoute.toString())
+  response.headers.set('X-Is-Auth-Route', isAuthRoute.toString())
+  response.headers.set('X-All-Cookies', request.cookies.getAll().map(c => c.name).join(','))
 
   // Rediriger vers login si pas authentifié et route protégée
   if (isProtectedRoute && !token) {
-    console.log('❌❌❌ REDIRECTING TO LOGIN - NO TOKEN FOR PROTECTED ROUTE ❌❌❌')
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+    const redirectResponse = NextResponse.redirect(loginUrl)
+    redirectResponse.headers.set('X-Redirect-Reason', 'no-token-protected-route')
+    return redirectResponse
   }
 
   // Rediriger vers dashboard si authentifié et sur une page d'auth
   if (isAuthRoute && token) {
-    console.log('✅✅✅ REDIRECTING TO DASHBOARD - ALREADY AUTHENTICATED ✅✅✅')
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    const redirectResponse = NextResponse.redirect(new URL('/dashboard', request.url))
+    redirectResponse.headers.set('X-Redirect-Reason', 'already-authenticated')
+    return redirectResponse
   }
 
-  console.log('✅ ALLOWING REQUEST')
-  return NextResponse.next()
+  return response
 }
 
 export const config = {
