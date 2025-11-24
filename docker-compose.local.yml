@@ -157,21 +157,25 @@ services:
   nextjs:
     build:
       context: .
-      dockerfile: ./docker/nextjs/Dockerfile.production
+      dockerfile: ./docker/nextjs/Dockerfile.local
     image: immoguinee/nextjs:local
     container_name: immo_local_nextjs
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       NEXT_PUBLIC_API_URL: http://localhost:8080/api
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       PORT: 3000
+    volumes:
+      - ./frontend/immoguinee:/app
+      - /app/node_modules
+      - /app/.next
     networks:
       - immo_local_network
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""]
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})\""]
       interval: 30s
       timeout: 10s
       retries: 3
