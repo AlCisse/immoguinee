@@ -17,7 +17,7 @@ WORKDIR /app
 COPY frontend/immoguinee/package.json frontend/immoguinee/package-lock.json* ./
 
 # Installer les dépendances (production + dev pour le build)
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # ==========================================
 # STAGE 2: Builder - Build de l'application
