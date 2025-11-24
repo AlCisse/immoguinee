@@ -11,18 +11,24 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('auth_token')?.value
   const pathname = request.nextUrl.pathname
 
-  // Debug logs
-  console.log('🔒 Middleware:', pathname)
-  console.log('🍪 Token from cookie:', token ? token.substring(0, 20) + '...' : 'NO TOKEN')
-  console.log('🍪 All cookies:', request.cookies.getAll().map(c => c.name))
+  // Debug logs TRÈS visibles
+  console.log('='.repeat(80))
+  console.log('🔒 MIDDLEWARE EXECUTING:', pathname)
+  console.log('🍪 Token from cookie:', token ? `${token.substring(0, 30)}...` : 'NO TOKEN FOUND')
+  console.log('🍪 All cookies names:', request.cookies.getAll().map(c => c.name).join(', '))
+  console.log('🍪 All cookies:', JSON.stringify(request.cookies.getAll()))
+  console.log('='.repeat(80))
 
   // Vérifier si la route est protégée
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
 
+  console.log(`📍 Is protected route? ${isProtectedRoute}`)
+  console.log(`📍 Is auth route? ${isAuthRoute}`)
+
   // Rediriger vers login si pas authentifié et route protégée
   if (isProtectedRoute && !token) {
-    console.log('❌ Redirecting to login - no token for protected route')
+    console.log('❌❌❌ REDIRECTING TO LOGIN - NO TOKEN FOR PROTECTED ROUTE ❌❌❌')
     const loginUrl = new URL('/auth/login', request.url)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
@@ -30,11 +36,11 @@ export function middleware(request: NextRequest) {
 
   // Rediriger vers dashboard si authentifié et sur une page d'auth
   if (isAuthRoute && token) {
-    console.log('✅ Redirecting to dashboard - already authenticated')
+    console.log('✅✅✅ REDIRECTING TO DASHBOARD - ALREADY AUTHENTICATED ✅✅✅')
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
-  console.log('✅ Allowing request')
+  console.log('✅ ALLOWING REQUEST')
   return NextResponse.next()
 }
 
