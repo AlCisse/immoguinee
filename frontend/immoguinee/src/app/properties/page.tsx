@@ -24,10 +24,20 @@ export default function PropertiesPage() {
         page,
         per_page: 12,
       })
-      setProperties(response.data)
-      setCurrentPage(response.current_page)
-      setTotalPages(response.last_page)
+
+      // Ensure we always set an array
+      if (response && Array.isArray(response.data)) {
+        setProperties(response.data)
+        setCurrentPage(response.current_page || 1)
+        setTotalPages(response.last_page || 1)
+      } else {
+        console.error('Invalid response structure:', response)
+        setProperties([])
+        setError('Format de réponse invalide')
+      }
     } catch (err: any) {
+      console.error('Error fetching properties:', err)
+      setProperties([]) // Ensure properties is always an array
       setError('Impossible de charger les propriétés')
     } finally {
       setLoading(false)
@@ -69,7 +79,7 @@ export default function PropertiesPage() {
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>
-        ) : properties.length === 0 ? (
+        ) : !Array.isArray(properties) || properties.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-600 text-lg">Aucune propriété trouvée</p>
           </div>
