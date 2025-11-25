@@ -1,0 +1,37 @@
+# ==========================================
+# DOCKERFILE LOCAL - Next.js pour développement
+# Version simplifiée sans multi-stage pour builds rapides
+# ==========================================
+FROM node:20-alpine
+
+# Labels pour documentation
+LABEL maintainer="Immo Guinée Dev Team"
+LABEL description="Next.js pour développement local avec hot-reload"
+LABEL version="1.0.0"
+
+# Installation des dépendances système nécessaires
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Copier les fichiers de dépendances
+COPY frontend/immoguinee/package.json frontend/immoguinee/package-lock.json* ./
+
+# Installer les dépendances avec npm ci (plus fiable que npm install)
+# npm ci utilise package-lock.json et garantit des installations reproductibles
+RUN npm ci
+
+# Copier tout le code source
+COPY frontend/immoguinee/ ./
+
+# Variables d'environnement
+ENV NODE_ENV=development
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Exposer le port
+EXPOSE 3000
+
+# Commande de démarrage en mode développement
+CMD ["npm", "run", "dev"]
